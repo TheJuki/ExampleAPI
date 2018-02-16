@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Example API</title>
+     <link rel="shortcut icon" href="https://cdn.glitch.com/46a629d4-cae5-4133-8bfb-48758c4b642f%2Ffavicon.ico?1518809742936">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.css" integrity="sha256-FpjP45Pz019159CFCReBCsZtVeCvGawN2Om1w+SIi0A=" crossorigin="anonymous" />
+  </head>
+  <body>
+    <h1 class="ui center aligned header" style="margin-top: 3em;">Login</h1>
+    <div class="ui center segments" style="width:300px;margin-left: auto!important;margin-right: auto!important;">
+        <div class="ui segment">
+            <form class="ui form" action="/api/v1/login" method="post">
+              <div class="field">
+                <input type="text" name="userId" placeholder="User">
+              </div>
+              <div class="field">
+                <input type="password" name="password" placeholder="Password">
+              </div>
+              <button class="ui primary button" type="submit">Submit</button>
+            </form>
+        </div>
+      </div>
+  </body>
+</html>
+<script
+  src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js" integrity="sha256-M9jjNz+jr/lTI+xVx2lpn3g6810YEPpSk8lReqH+qWE=" crossorigin="anonymous"></script>
