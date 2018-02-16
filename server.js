@@ -5,23 +5,46 @@
 */
 
 // init project
+
+// Express
 var express = require('express');
+
+// MongoDB
 var mongodb = require('mongodb');
+var ObjectId = require('mongodb').ObjectId;
+
+// Init Express with Body Parser
 var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-const f = require('util').format;
-const assert = require('assert');
+
+// Support for HTML files
 app.use(express.static('public'));
 
+// String Formatter
+const f = require('util').format;
+
+// Assert
+const assert = require('assert');
+
+// Password Hasher
 var bcrypt = require('bcrypt');
 const saltRounds = 10;
 
+// JWT
+var jwt = require('jsonwebtoken');
+
+// DB credentials
 const user = encodeURIComponent(process.env.USER);
 const password = encodeURIComponent(process.env.PASS);
 
-// Connection URL
+// JWT components
+const jwtSecret = process.env.JWT_SECRET;
+const jwtAudience = process.env.JWT_AUDIENCE;
+const jwtIssurer = process.env.JWT_ISSURER;
+
+// DB URL
 const url = f('mongodb://%s:%s@%s:%s/?authSource=%s',
   user, password, process.env.HOST, process.env.PORT, process.env.DB);
 
@@ -63,10 +86,11 @@ app.get("/api/v1/contact/list/json", function (req, res) {
   res.json({"sv": sv, "type": type})
 });
 
+// API login
 app.post("/api/v1/login", function (req, res) {
-  var user = req.body.user;
+  var user = req.body.userId.toLowerCase();
   var password = req.body.password;
-  console.log('LOGIN ' + user + ' ' + password);
+  console.log('LOGIN ' + user);
   
   mongodb.MongoClient.connect(url, function(err, client) {
     assert.equal(null, err);
@@ -77,26 +101,57 @@ app.post("/api/v1/login", function (req, res) {
     var users = db.collection('users');
     
     db.collection("users").findOne({ userId : { $eq: user } }, function(err, userDoc) {
-      client.close();
       
       if(err || !userDoc)
       {
+         client.close();
          res.json({"success": false })
       }
       else
       {
-        console.log(userDoc.userId);
       
         bcrypt.compare(password, userDoc.password, function(err, result) {
           if(result == true)
           {
-            console.log("Password matches!")
-            res.json({"success": true })
+            jwt.sign({sub: userDoc.userId}, jwtSecret, { expiresIn: '24h', audience: jwtAudience, issuer : jwtIssurer }, function(err, token) {
+              if(err)
+              {
+                  client.close();
+                  console.log(err);
+                  res.json({"Success": false })
+              }
+              else
+              {
+                
+                db.collection("contacts").findOne({ _id : { $eq: new ObjectId(userDoc.contactId) } }, function(err, contactDoc) {
+                  if(err || !contactDoc)
+                  {
+                   client.close();
+                   res.json({"success": false })
+                  }
+                  else
+                  {
+                     client.close();
+                     res.json(
+                       {
+                         "Success": true, 
+                         "token": token, 
+                         "id": userDoc.id, 
+                         "fullName": contactDoc.firstName + " " + contactDoc.lastName, 
+                         "username": userDoc.userId, 
+                         "roles": userDoc.roles.split(",") 
+                       });
+                  }
+                });
+               
+              }
+            });
+            
           }
           else
           {
-            console.log("Password fail!")
-            res.json({"success": false })
+            client.close();
+            res.json({"Success": false })
           }
         });
       }
