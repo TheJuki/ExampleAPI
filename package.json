@@ -1,0 +1,25 @@
+{
+  "name": "exampleapi",
+  "version": "0.0.1",
+  "description": "Example app interacting with MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.2",
+    "mongodb": "^3.0.2",
+    "body-parser": "^1.18.2",
+    "bcrypt": "^1.0.3"
+  },
+  "engines": {
+    "node": "8.9.4"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "mongodb",
+    "database"
+  ],
+  "license": "Apache-2.0"
+}
