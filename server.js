@@ -7,21 +7,21 @@
 // init project
 
 // Express
-var express = require('express');
+const express = require('express');
 
 // MongoDB
-var mongodb = require('mongodb');
-var ObjectId = require('mongodb').ObjectId;
+const mongodb = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
 
 // Init Express with Body Parser
-var app = express();
-var bodyParser = require('body-parser');
+const app = express();
+const bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 // Support for HTML files
 app.use(express.static('public'));
-var path = require('path');
+const path = require('path');
 
 // String Formatter
 const f = require('util').format;
@@ -30,11 +30,11 @@ const f = require('util').format;
 const assert = require('assert');
 
 // Password Hasher
-var bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 // JWT
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 // DB credentials
 const user = encodeURIComponent(process.env.USER);
@@ -58,8 +58,8 @@ app.get("/updateUserPassword", function (req, res) {
       assert.equal(null, err);
       console.log("Connected to server");
 
-      var db = client.db(process.env.DB);
-      var users = db.collection('users');
+      const db = client.db(process.env.DB);
+      const users = db.collection('users');
 
       users.update(
         { userId: 'user' }, 
@@ -120,7 +120,7 @@ app.post("/verify", function (req, res) {
   Gets a list of Contacts by full name search
 */
 app.get("/api/v1/contact/list/json", function (req, res) {
-  var sv = req.query.sv;
+  var sv = req.query.term;
   if (!req.headers.authorization) {
     res.status(403).json({ "Success": false, error: 'No auth sent!' });
   }
@@ -137,7 +137,7 @@ app.get("/api/v1/contact/list/json", function (req, res) {
           assert.equal(null, err);
           console.log("Connected to server");
 
-          var db = client.db(process.env.DB);
+          const db = client.db(process.env.DB);
 
           const contacts = db.collection('contacts');
           
@@ -154,11 +154,111 @@ app.get("/api/v1/contact/list/json", function (req, res) {
 });
 
 /*
+  Gets a list of Lookup Contacts by full name search
+*/
+app.get("/api/v1/contact/lookup/json", function (req, res) {
+  var sv = req.query.term;
+  if (!req.headers.authorization) {
+    res.status(403).json({ "Success": false, error: 'No auth sent!' });
+  }
+  else
+  {
+    jwt.verify(req.headers.authorization, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
+      if(err)
+      {
+         res.json({ "Success": false });
+      }
+      else
+      {
+        mongodb.MongoClient.connect(url, function(err, client) {
+          assert.equal(null, err);
+          console.log("Connected to server");
+
+          const db = client.db(process.env.DB);
+
+          const contacts = db.collection('contacts');
+          
+          contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => mapContactToContactLookupJson(x)).toArray(function(err, docs) {
+            assert.equal(err, null);
+            res.json(docs);
+            client.close();
+          });
+          
+        });
+      }
+    });
+  }
+});
+
+/*
+  Saves a Contact
+*/
+app.post("/api/v1/contact/save", function (req, res) {
+  var contact = req.body;
+  if (!req.headers.authorization) {
+    res.status(403).json({ "Success": false, error: 'No auth sent!' });
+  }
+  else
+  {
+    jwt.verify(req.headers.authorization, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
+      if(err)
+      {
+         res.json({ "Success": false });
+      }
+      else
+      {
+        mongodb.MongoClient.connect(url, function(err, client) {
+          assert.equal(null, err);
+          console.log("Connected to server");
+          console.log(new Date());
+
+          const db = client.db(process.env.DB);
+
+          const contacts = db.collection('contacts');
+          
+          if(contact.id.trim().length < 1)
+          {
+            contacts.insertOne(mapContactJsonToContact(contact), function(err, result) {
+              client.close();
+              if(err)
+              {
+                console.log(err);
+                res.json({ "Success": false });
+              }
+              else
+              {
+                 console.log('inserted record', result.insertedId);
+                 res.json({ "Success": false, "id": result.insertedId });
+              }
+            });
+          }
+          else
+          {
+            contacts.updateOne({ "_id" : new ObjectId(contact.id) },{ $set: mapContactJsonToContact(contact) }, function(err, result) {
+              client.close();
+              if(err)
+              {
+                console.log(err);
+                res.json({ "Success": false });
+              }
+              else
+              {
+                 res.json({ "Success": true, "id": contact.id });
+              }
+            });
+          }
+          
+        });
+      }
+    });
+  }
+});
+
+/*
   Gets a Contact by _id
 */
 app.get("/api/v1/contact/find/json", function (req, res) {
   var id = req.query.id;
-  console.log(id);
   if (!req.headers.authorization) {
     res.status(403).json({ "Success": false, error: 'No auth sent!' });
   }
@@ -211,6 +311,18 @@ function mapContactToTableCellJson(c)
 }
 
 /*
+  Maps a Contact to ContactLookupJson
+*/
+function mapContactToContactLookupJson(c)
+{
+    return {
+      "id": String(c._id),
+      "value": c.fullName,
+      "label": c.fullName + " (" + c.teamName + ")",
+    }
+}
+
+/*
   Maps a Contact to ContactJson
 */
 function mapContactToContactJson(c)
@@ -234,20 +346,42 @@ function mapContactToContactJson(c)
 }
 
 /*
+  Maps a ContactJson to Contact
+*/
+function mapContactJsonToContact(c)
+{
+    return {
+      "firstName": c.firstName,
+      "lastName": c.lastName,
+      "mobilePhone": c.mobilePhone,
+      "emailAddress": c.emailAddress,
+      "businessPhone": c.businessPhone,
+      "supervisorName": c.supervisorName,
+      "supervisorId": c.supervisorId,
+      "modifyingUser": c.modifyingUser,
+      "creatingUser": c.creatingUser,
+      "createdDate": c.createdDate,
+      "modifiedDate": c.modifiedDate,
+      "teamId": c.teamId,
+      "teamName": c.teamName,
+    }
+}
+
+/*
   API login
 */
 app.post("/api/v1/login", function (req, res) {
-  var user = req.body.userId.toLowerCase();
-  var password = req.body.password;
+  const user = req.body.userId.toLowerCase();
+  const password = req.body.password;
   console.log('LOGIN ' + user);
   
   mongodb.MongoClient.connect(url, function(err, client) {
     assert.equal(null, err);
     console.log("Connected to server");
 
-    var db = client.db(process.env.DB);
+    const db = client.db(process.env.DB);
     
-    var users = db.collection('users');
+    const users = db.collection('users');
     
     db.collection("users").findOne({ userId : { $eq: user } }, function(err, userDoc) {
       
@@ -309,6 +443,6 @@ app.post("/api/v1/login", function (req, res) {
 });
 
 // listen for requests
-var listener = app.listen("3000", function () {
+const listener = app.listen("3000", function () {
   console.log('Your app is listening on port ' + listener.address().port);
 });

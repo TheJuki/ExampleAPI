@@ -3,14 +3,31 @@
     <title>Example API</title>
      <link rel="shortcut icon" href="https://cdn.glitch.com/46a629d4-cae5-4133-8bfb-48758c4b642f%2Ffavicon.ico?1518809742936">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.css" integrity="sha256-FpjP45Pz019159CFCReBCsZtVeCvGawN2Om1w+SIi0A=" crossorigin="anonymous" />
+    <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
   </head>
   <body>
+    <div class="ui secondary pointing menu">
+      <a class="item active" href="/">
+        Home
+      </a>
+      <a class="item" href="/login">
+        Test Login
+      </a>
+      <a class="item" href="/verify">
+        Test JWT Token
+      </a>
+      <div class="right menu">
+        <a class="ui item" href="https://glitch.com/edit/#!/example-api-thejuki?path=public/index.html">
+          <i class="far fa-edit" style="margin-right: 5px"></i>Edit on Glitch
+        </a>
+      </div>
+    </div>
     <h1 class="ui center aligned header" style="margin-top: 3em;">Welcome to the Example API</h1>
     <div class="ui text container">
       <div class="ui segments">
-        <div class="ui segment">Server URL: https://example-api-thejuki.glitch.me/</div>
-        <div class="ui segment">Username: user</div>
-        <div class="ui segment"> Password: kotlin</div>
+        <div class="ui segment"><i class="fas fa-globe" style="margin-right: 10px"></i>URL: https://example-api-thejuki.glitch.me/</div>
+        <div class="ui segment"><i class="fas fa-user" style="margin-right: 10px"></i>Username: user</div>
+        <div class="ui segment"><i class="fas fa-unlock-alt" style="margin-right: 10px"></i>Password: kotlin</div>
       </div>
       <div class="ui blue segment"><a href="/login">Try logging in</a></div>
       <div class="ui green segment"><a href="/verify">Try verifying JWT token</a></div>
@@ -18,7 +35,7 @@
   </body>
 </html>
 <script
-  src="https://code.jquery.com/jquery-3.1.1.min.js"
-  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
   crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js" integrity="sha256-M9jjNz+jr/lTI+xVx2lpn3g6810YEPpSk8lReqH+qWE=" crossorigin="anonymous"></script>
