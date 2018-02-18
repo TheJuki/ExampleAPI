@@ -28,8 +28,8 @@ const filterOptions = {
 	typeList:['object','string'],
 	urlBlackList: blackList,
   bodyBlackList: blackList,
-	dispatchToErrorHandler: true, // if this parameter is true, the Error Handler middleware below works
-	appendFound: true // appending found forbidden characters to the end of default or user defined error messages
+	dispatchToErrorHandler: true,
+	appendFound: true
 }
 
 /* Applying the filter */
