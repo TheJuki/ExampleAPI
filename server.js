@@ -13,11 +13,27 @@ const express = require('express');
 const mongodb = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
 
-// Init Express with Body Parser
+// Content Filter
+var filter = require('content-filter');
+
+// Init Express with Body Parser and Content Filter
 const app = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(bodyParser.json({limit: '1mb'})); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' })); // support encoded bodies
+
+/* Filter Options */
+const blackList = process.env.BLACKLIST.split(",");
+const filterOptions = {
+	typeList:['object','string'],
+	urlBlackList: blackList,
+  bodyBlackList: blackList,
+	dispatchToErrorHandler: true, // if this parameter is true, the Error Handler middleware below works
+	appendFound: true // appending found forbidden characters to the end of default or user defined error messages
+}
+
+/* Applying the filter */
+app.use(filter(filterOptions));
 
 // Support for HTML files
 app.use(express.static('public'));
@@ -36,6 +52,9 @@ const saltRounds = 10;
 // JWT
 const jwt = require('jsonwebtoken');
 
+// Is Offline?
+const isOffline = process.env.ISOFFLINE;
+
 // DB credentials
 const user = encodeURIComponent(process.env.USER);
 const password = encodeURIComponent(process.env.PASS);
@@ -53,6 +72,10 @@ const url = f('mongodb://%s:%s@%s:%s/?authSource=%s',
   Generates a new password hash for testing
 */
 app.get("/updateUserPassword", function (req, res) {
+  if(isOffline)
+  {
+    return res.json({ "Offline": true });
+  }
   bcrypt.hash("kotlin", saltRounds, function(err, hash) {
     mongodb.MongoClient.connect(url, function(err, client) {
       assert.equal(null, err);
@@ -83,13 +106,21 @@ app.get("/updateUserPassword", function (req, res) {
   Welcome!
 */
 app.get("/", function (req, res) {
-  res.sendFile("index.html");
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
+  res.sendFile(path.join(__dirname + "/public/home.html"));
 });
 
 /*
   Login page for testing
 */
 app.get("/login", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   res.sendFile(path.join(__dirname + "/public/login.html"));
 });
 
@@ -97,6 +128,10 @@ app.get("/login", function (req, res) {
   JWT Token verification page for testing
 */
 app.get("/verify", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   res.sendFile(path.join(__dirname + "/public/verify.html"));
 });
 
@@ -104,9 +139,14 @@ app.get("/verify", function (req, res) {
   Verifies a JWT Token for testing
 */
 app.post("/verify", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   jwt.verify(req.body.token, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
     if(err)
     {
+       console.log(err);
        res.json({"Success": false });
     }
     else
@@ -120,6 +160,10 @@ app.post("/verify", function (req, res) {
   Gets a list of Contacts by full name search
 */
 app.get("/api/v1/contact/list/json", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   var sv = req.query.term;
   if (!req.headers.authorization) {
     res.status(403).json({ "Success": false, error: 'No auth sent!' });
@@ -157,6 +201,10 @@ app.get("/api/v1/contact/list/json", function (req, res) {
   Gets a list of Lookup Contacts by full name search
 */
 app.get("/api/v1/contact/lookup/json", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   var sv = req.query.term;
   if (!req.headers.authorization) {
     res.status(403).json({ "Success": false, error: 'No auth sent!' });
@@ -194,6 +242,10 @@ app.get("/api/v1/contact/lookup/json", function (req, res) {
   Saves a Contact
 */
 app.post("/api/v1/contact/save", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   var contact = req.body;
   if (!req.headers.authorization) {
     res.status(403).json({ "Success": false, error: 'No auth sent!' });
@@ -223,7 +275,7 @@ app.post("/api/v1/contact/save", function (req, res) {
               if(err)
               {
                 console.log(err);
-                res.json({ "Success": false });
+                res.json({ "Success": false, "error": "Contact could not be added" });
               }
               else
               {
@@ -239,7 +291,7 @@ app.post("/api/v1/contact/save", function (req, res) {
               if(err)
               {
                 console.log(err);
-                res.json({ "Success": false });
+                res.json({ "Success": false , "error": "Contact could not be updated" });
               }
               else
               {
@@ -258,6 +310,10 @@ app.post("/api/v1/contact/save", function (req, res) {
   Gets a Contact by _id
 */
 app.get("/api/v1/contact/find/json", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
   var id = req.query.id;
   if (!req.headers.authorization) {
     res.status(403).json({ "Success": false, error: 'No auth sent!' });
@@ -283,7 +339,7 @@ app.get("/api/v1/contact/find/json", function (req, res) {
             if(err || !contactDoc)
             {
              client.close();
-             res.json({ "Success": false });
+             res.json({ "Success": false, "error": "Contact not found"  });
             }
             res.json(mapContactToContactJson(contactDoc));
             client.close();
@@ -293,6 +349,85 @@ app.get("/api/v1/contact/find/json", function (req, res) {
       }
     });
   }
+});
+
+/*
+  API login
+*/
+app.post("/api/v1/login", function (req, res) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
+  const user = req.body.userId.toLowerCase();
+  const password = req.body.password;
+  console.log('LOGIN ' + user);
+  
+  mongodb.MongoClient.connect(url, function(err, client) {
+    assert.equal(null, err);
+    console.log("Connected to server");
+
+    const db = client.db(process.env.DB);
+    
+    const users = db.collection('users');
+    
+    db.collection("users").findOne({ userId : { $eq: user } }, function(err, userDoc) {
+      
+      if(err || !userDoc)
+      {
+         client.close();
+         res.json({ "Success": false, "error": "Username or password is incorrect" });
+      }
+      else
+      {
+      
+        bcrypt.compare(password, userDoc.password, function(err, result) {
+          if(result == true)
+          {
+            jwt.sign({sub: userDoc.userId}, jwtSecret, { expiresIn: '24h', audience: jwtAudience, issuer : jwtIssurer }, function(err, token) {
+              if(err)
+              {
+                  client.close();
+                  console.log(err);
+                  res.json({ "Success": false, "error": "JWT FAIL!"  });
+              }
+              else
+              {
+                
+                db.collection("contacts").findOne({ _id : { $eq: new ObjectId(userDoc.contactId) } }, function(err, contactDoc) {
+                  if(err || !contactDoc)
+                  {
+                   client.close();
+                   res.json({ "Success": false, "error": "Contact not found for this user"  });
+                  }
+                  else
+                  {
+                     client.close();
+                     res.json(
+                       {
+                         "Success": true, 
+                         "token": token, 
+                         "id": contactDoc._id, 
+                         "fullName": contactDoc.fullName, 
+                         "username": userDoc.userId, 
+                         "roles": userDoc.roles.split(",")
+                       });
+                  }
+                });
+               
+              }
+            });
+            
+          }
+          else
+          {
+            client.close();
+            res.json({ "Success": false, "error": "Username or password is incorrect"  });
+          }
+        });
+      }
+    });
+  });
 });
 
 /*
@@ -367,79 +502,21 @@ function mapContactJsonToContact(c)
     }
 }
 
-/*
-  API login
-*/
-app.post("/api/v1/login", function (req, res) {
-  const user = req.body.userId.toLowerCase();
-  const password = req.body.password;
-  console.log('LOGIN ' + user);
-  
-  mongodb.MongoClient.connect(url, function(err, client) {
-    assert.equal(null, err);
-    console.log("Connected to server");
+/* Error Handling */
+app.use(function (req, res, next) {
+  if(isOffline === "true")
+  {
+    return res.json({ "Offline": true });
+  }
+  res.status(404).json({ "Success": false, "error": "Page/API Not Found" });
+})
 
-    const db = client.db(process.env.DB);
-    
-    const users = db.collection('users');
-    
-    db.collection("users").findOne({ userId : { $eq: user } }, function(err, userDoc) {
-      
-      if(err || !userDoc)
-      {
-         client.close();
-         res.json({ "Success": false });
-      }
-      else
-      {
-      
-        bcrypt.compare(password, userDoc.password, function(err, result) {
-          if(result == true)
-          {
-            jwt.sign({sub: userDoc.userId}, jwtSecret, { expiresIn: '24h', audience: jwtAudience, issuer : jwtIssurer }, function(err, token) {
-              if(err)
-              {
-                  client.close();
-                  console.log(err);
-                  res.json({ "Success": false });
-              }
-              else
-              {
-                
-                db.collection("contacts").findOne({ _id : { $eq: new ObjectId(userDoc.contactId) } }, function(err, contactDoc) {
-                  if(err || !contactDoc)
-                  {
-                   client.close();
-                   res.json({ "Success": false });
-                  }
-                  else
-                  {
-                     client.close();
-                     res.json(
-                       {
-                         "Success": true, 
-                         "token": token, 
-                         "id": contactDoc._id, 
-                         "fullName": contactDoc.fullName, 
-                         "username": userDoc.userId, 
-                         "roles": userDoc.roles.split(",")
-                       });
-                  }
-                });
-               
-              }
-            });
-            
-          }
-          else
-          {
-            client.close();
-            res.json({ "Success": false });
-          }
-        });
-      }
-    });
-  });
+app.use(function (err, req, res, next){
+	console.log("A new error has fallen to the error handler")
+	console.log("Status: ", err.status);
+	console.log("Code: ", err.code);
+	console.log("Message: ", err.message);
+	res.status(err.status).json({ "Success": false, "error": "Something went wrong." });
 });
 
 // listen for requests
