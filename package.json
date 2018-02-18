@@ -12,7 +12,8 @@
     "body-parser": "^1.18.2",
     "bcrypt": "^1.0.3",
     "jsonwebtoken": "^8.1.1",
-    "content-filter": "^1.1.2"
+    "content-filter": "^1.1.2",
+    "pug": "^0.1.0"
   },
   "engines": {
     "node": "8.9.4"

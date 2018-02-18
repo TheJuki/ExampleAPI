@@ -5,6 +5,7 @@
 */
 
 // init project
+const websiteTitle = 'Example API';
 
 // Express
 const express = require('express');
@@ -21,6 +22,9 @@ const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json({limit: '1mb'})); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' })); // support encoded bodies
+
+// Use Pug view engine
+app.set('view engine', 'pug');
 
 /* Filter Options */
 const blackList = process.env.BLACKLIST.split(",");
@@ -64,6 +68,10 @@ const jwtSecret = process.env.JWT_SECRET;
 const jwtAudience = process.env.JWT_AUDIENCE;
 const jwtIssurer = process.env.JWT_ISSURER;
 
+// App Credentials
+const appUser = process.env.APP_USER;
+const appPassword = process.env.APP_PASSWORD;
+
 // DB URL
 const url = f('mongodb://%s:%s@%s:%s/?authSource=%s',
   user, password, process.env.HOST, process.env.PORT, process.env.DB);
@@ -76,7 +84,7 @@ app.get("/updateUserPassword", function (req, res) {
   {
     return res.json({ "Offline": true });
   }
-  bcrypt.hash("kotlin", saltRounds, function(err, hash) {
+  bcrypt.hash(appPassword, saltRounds, function(err, hash) {
     mongodb.MongoClient.connect(url, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
@@ -110,7 +118,8 @@ app.get("/", function (req, res) {
   {
     return res.json({ "Offline": true });
   }
-  res.sendFile(path.join(__dirname + "/public/home.html"));
+  //res.sendFile(path.join(__dirname + "/public/home.html"));
+  res.render('home', { title: websiteTitle, nav: 'home', server: req.protocol + 's://' + req.get('host'), user: appUser, password: appPassword });
 });
 
 /*
@@ -121,7 +130,8 @@ app.get("/login", function (req, res) {
   {
     return res.json({ "Offline": true });
   }
-  res.sendFile(path.join(__dirname + "/public/login.html"));
+  //res.sendFile(path.join(__dirname + "/public/login.html"));
+  res.render('login', { title: websiteTitle, nav: 'login' });
 });
 
 /*
@@ -132,13 +142,14 @@ app.get("/verify", function (req, res) {
   {
     return res.json({ "Offline": true });
   }
-  res.sendFile(path.join(__dirname + "/public/verify.html"));
+  //res.sendFile(path.join(__dirname + "/public/verify.html"));
+  res.render('verify', { title: websiteTitle, nav: 'verify' });
 });
 
 /*
   Verifies a JWT Token for testing
 */
-app.post("/verify", function (req, res) {
+app.post("/api/v1/verify", function (req, res) {
   if(isOffline === "true")
   {
     return res.json({ "Offline": true });
