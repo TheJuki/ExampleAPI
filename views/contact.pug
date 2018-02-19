@@ -1,0 +1,35 @@
+extends layout.pug
+
+block content
+    h1.ui.center.aligned.header(style="margin-top: 3em") Contact Lookup
+    div.ui.center.segments(style="width:300px;margin-left: auto!important;margin-right: auto!important;")
+        div.ui.segment
+            form.ui.form#contactForm(action="/api/v1/contact/list/json" method="get")
+                div.field
+                    input(type="text" name="term" placeholder="Name" autocapitalize="off" autocorrect="off" autofocus="autofocus" autocomplete="off")
+                div.field
+                    input(type="text" name="token" placeholder="Token" autocapitalize="off" autocorrect="off" autofocus="autofocus" autocomplete="off")
+                button.ui.primary.button(type="submit") Submit
+    script(src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous")
+    script.
+        $('#contactForm').submit(function(e) {
+            $.ajax({ 
+                type:'get', 
+                url: $('#contactForm').attr('action'), 
+                headers: { 
+                    'Authorization': $('[name="token"]').val()
+                }, 
+                data: $('#contactForm').serialize()
+            })
+            .done(function(data, status, req) 
+            { 
+                console.log("done", data, status, req); 
+                alert("Open Console to view results");
+            })
+            .fail(function(req, status, err) 
+            { 
+                console.log("fail", req, status, err); 
+                alert("Something went wrong. Token is the JWT created after logging in.");
+            });
+            e.preventDefault();
+        });
