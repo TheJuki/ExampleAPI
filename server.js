@@ -34,7 +34,7 @@ app.set('view engine', 'pug');
 /* Filter Options */
 const blackList = process.env.BLACKLIST.split(",");
 const filterOptions = {
-	typeList:['object','string', 'function'],
+	typeList:['object', 'string', 'function'],
 	urlBlackList: blackList,
   bodyBlackList: blackList,
 	dispatchToErrorHandler: true,
@@ -190,7 +190,7 @@ app.post("/api/v1/login", function (req, res) {
                      res.json(
                        {
                          "Success": true, 
-                         "token": token, 
+                         "token": "Bearer " + token, 
                          "id": contactDoc._id, 
                          "fullName": contactDoc.fullName, 
                          "username": userDoc.userId, 
@@ -228,6 +228,9 @@ app.use(function (err, req, res, next){
 	console.log("Status: ", err.status);
 	console.log("Code: ", err.code);
 	console.log("Message: ", err.message);
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ "Success": false, "error": "Invalid Auth" });
+  }
 	res.status(err.status).json({ "Success": false, "error": "Something went wrong." });
 });
 

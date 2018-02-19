@@ -14,12 +14,8 @@ const f = require('util').format;
 // Assert
 const assert = require('assert');
 
-// Password Hasher
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
-
 // JWT
-const jwt = require('jsonwebtoken');
+const jwt = require('express-jwt');
 
 // Is Offline?
 const isOffline = process.env.ISOFFLINE;
@@ -44,195 +40,134 @@ module.exports = function(app) {
   /*
     Gets a list of Contacts by full name search
   */
-  app.get("/api/v1/contact/list/json", function (req, res) {
+  app.get("/api/v1/contact/list/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     var sv = req.query.term;
-    if (!req.headers.authorization) {
-      res.status(403).json({ "Success": false, error: 'No auth sent!' });
-    }
-    else
-    {
-      jwt.verify(req.headers.authorization, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
-        if(err)
-        {
-           res.json({ "Success": false });
-        }
-        else
-        {
-          mongodb.MongoClient.connect(url, function(err, client) {
-            assert.equal(null, err);
-            console.log("Connected to server");
+    mongodb.MongoClient.connect(url, function(err, client) {
+      assert.equal(null, err);
+      console.log("Connected to server");
 
-            const db = client.db(process.env.DB);
+      const db = client.db(process.env.DB);
 
-            const contacts = db.collection('contacts');
+      const contacts = db.collection('contacts');
 
-            contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => contactMapper.mapContactToTableCellJson(x)).toArray(function(err, docs) {
-              assert.equal(err, null);
-              res.json(docs);
-              client.close();
-            });
-
-          });
-        }
+      contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => contactMapper.mapContactToTableCellJson(x)).toArray(function(err, docs) {
+        assert.equal(err, null);
+        res.json(docs);
+        client.close();
       });
-    }
+    });
   });
 
   /*
     Gets a list of Lookup Contacts by full name search
   */
-  app.get("/api/v1/contact/lookup/json", function (req, res) {
+  app.get("/api/v1/contact/lookup/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     var sv = req.query.term;
-    if (!req.headers.authorization) {
-      res.status(403).json({ "Success": false, error: 'No auth sent!' });
-    }
-    else
-    {
-      jwt.verify(req.headers.authorization, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
-        if(err)
-        {
-           res.json({ "Success": false });
-        }
-        else
-        {
-          mongodb.MongoClient.connect(url, function(err, client) {
-            assert.equal(null, err);
-            console.log("Connected to server");
+     mongodb.MongoClient.connect(url, function(err, client) {
+      assert.equal(null, err);
+      console.log("Connected to server");
 
-            const db = client.db(process.env.DB);
+      const db = client.db(process.env.DB);
 
-            const contacts = db.collection('contacts');
+      const contacts = db.collection('contacts');
 
-            contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => contactMapper.mapContactToContactLookupJson(x)).toArray(function(err, docs) {
-              assert.equal(err, null);
-              res.json(docs);
-              client.close();
-            });
-
-          });
-        }
+      contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => contactMapper.mapContactToContactLookupJson(x)).toArray(function(err, docs) {
+        assert.equal(err, null);
+        res.json(docs);
+        client.close();
       });
-    }
+
+    });
   });
 
   /*
     Saves a Contact
   */
-  app.post("/api/v1/contact/save", function (req, res) {
+  app.post("/api/v1/contact/save", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     var contact = req.body;
-    if (!req.headers.authorization) {
-      res.status(403).json({ "Success": false, error: 'No auth sent!' });
-    }
-    else
-    {
-      jwt.verify(req.headers.authorization, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
-        if(err)
-        {
-           res.json({ "Success": false });
-        }
-        else
-        {
-          mongodb.MongoClient.connect(url, function(err, client) {
-            assert.equal(null, err);
-            console.log("Connected to server");
-            console.log(new Date());
+    mongodb.MongoClient.connect(url, function(err, client) {
+      assert.equal(null, err);
+      console.log("Connected to server");
+      console.log(new Date());
 
-            const db = client.db(process.env.DB);
+      const db = client.db(process.env.DB);
 
-            const contacts = db.collection('contacts');
+      const contacts = db.collection('contacts');
 
-            if(contact.id == null || contact.id.trim().length < 1)
-            {
-              contacts.insertOne(contactMapper.mapContactJsonToContact(contact), function(err, result) {
-                client.close();
-                if(err)
-                {
-                  console.log(err);
-                  res.json({ "Success": false, "error": "Contact could not be added" });
-                }
-                else
-                {
-                   console.log('inserted record', result.insertedId);
-                   res.json({ "Success": false, "id": result.insertedId });
-                }
-              });
-            }
-            else
-            {
-              contacts.updateOne({ "_id" : new ObjectId(contact.id) },{ $set: contactMapper.mapContactJsonToContact(contact) }, function(err, result) {
-                client.close();
-                if(err)
-                {
-                  console.log(err);
-                  res.json({ "Success": false , "error": "Contact could not be updated" });
-                }
-                else
-                {
-                   res.json({ "Success": true, "id": contact.id });
-                }
-              });
-            }
+      if(contact.id == null || contact.id.trim().length < 1)
+      {
+        contact.
+        contacts.insertOne(contactMapper.mapContactJsonToContact(contact), function(err, result) {
+          client.close();
+          if(err)
+          {
+            console.log(err);
+            res.json({ "Success": false, "error": "Contact could not be added" });
+          }
+          else
+          {
+             console.log('inserted record', result.insertedId);
+             res.json({ "Success": false, "id": result.insertedId });
+          }
+        });
+      }
+      else
+      {
+        contacts.updateOne({ "_id" : new ObjectId(contact.id) },{ $set: contactMapper.mapContactJsonToContact(contact) }, function(err, result) {
+          client.close();
+          if(err)
+          {
+            console.log(err);
+            res.json({ "Success": false , "error": "Contact could not be updated" });
+          }
+          else
+          {
+             res.json({ "Success": true, "id": contact.id });
+          }
+        });
+      }
 
-          });
-        }
-      });
-    }
+    });
   });
 
   /*
     Gets a Contact by _id
   */
-  app.get("/api/v1/contact/find/json", function (req, res) {
+  app.get("/api/v1/contact/find/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     var id = req.query.id;
-    if (!req.headers.authorization) {
-      res.status(403).json({ "Success": false, error: 'No auth sent!' });
-    }
-    else
-    {
-      jwt.verify(req.headers.authorization, jwtSecret, { audience: jwtAudience, issuer: jwtIssurer }, function(err, decoded) {
-        if(err)
+    mongodb.MongoClient.connect(url, function(err, client) {
+      assert.equal(null, err);
+      console.log("Connected to server");
+
+      var db = client.db(process.env.DB);
+
+      const contacts = db.collection('contacts');
+
+      db.collection("contacts").findOne({ _id : { $eq: new ObjectId(id) } }, function(err, contactDoc) {
+        if(err || !contactDoc)
         {
-           res.json({ "Success": false });
+         client.close();
+         res.json({ "Success": false, "error": "Contact not found"  });
         }
-        else
-        {
-          mongodb.MongoClient.connect(url, function(err, client) {
-            assert.equal(null, err);
-            console.log("Connected to server");
-
-            var db = client.db(process.env.DB);
-
-            const contacts = db.collection('contacts');
-
-            db.collection("contacts").findOne({ _id : { $eq: new ObjectId(id) } }, function(err, contactDoc) {
-              if(err || !contactDoc)
-              {
-               client.close();
-               res.json({ "Success": false, "error": "Contact not found"  });
-              }
-              res.json(contactMapper.mapContactToContactJson(contactDoc));
-              client.close();
-            });
-
-          });
-        }
+        res.json(contactMapper.mapContactToContactJson(contactDoc));
+        client.close();
       });
-    }
+    });
   });
 }
