@@ -8,7 +8,7 @@ const isOffline = process.env.ISOFFLINE;
 const appUser = process.env.APP_USER;
 const appPassword = process.env.APP_PASSWORD;
 
-module.exports = function(app){
+module.exports = function(app, dbUrl){
   
   /*
     Welcome!

@@ -1,4 +1,10 @@
 /*
+ * map/contact.js
+ * 
+ * Contact Mapper
+*/
+
+/*
   Maps a Contact to TableCellJson
 */
 exports.mapContactToTableCellJson = (c) => {

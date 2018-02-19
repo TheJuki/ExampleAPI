@@ -1,7 +1,7 @@
 /*
- * routes/team.js
+ * routes/count.js
  * 
- * Team API
+ * Count API
 */
 
 // MongoDB
@@ -30,25 +30,24 @@ const teamMapper = require('../map/team');
 module.exports = function(app, dbUrl) {
   
   /*
-    Gets a list of Teams
+    Gets the count
   */
-  app.get("/api/v1/team/list/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.get("/api/v1/count/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
-    var sv = req.query.term;
     mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
 
       const db = client.db(process.env.DB);
 
-      const teams = db.collection('teams');
+      const counts = db.collection('counts');
 
-      teams.find().map(x => teamMapper.mapTeamToListItemJson(x)).toArray(function(err, docs) {
+      counts.find().toArray(function(err, docs) {
         assert.equal(err, null);
-        res.json(docs);
+        res.json(docs[0]);
         client.close();
       });
     });

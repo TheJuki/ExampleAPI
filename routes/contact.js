@@ -1,5 +1,5 @@
 /*
- * contact.js
+ * routes/contact.js
  * 
  * Contact API
 */
@@ -20,22 +20,14 @@ const jwt = require('express-jwt');
 // Is Offline?
 const isOffline = process.env.ISOFFLINE;
 
-// DB credentials
-const user = encodeURIComponent(process.env.USER);
-const password = encodeURIComponent(process.env.PASS);
-
 // JWT components
 const jwtSecret = process.env.JWT_SECRET;
 const jwtAudience = process.env.JWT_AUDIENCE;
 const jwtIssurer = process.env.JWT_ISSURER;
 
-// DB URL
-const url = f('mongodb://%s:%s@%s:%s/?authSource=%s',
-  user, password, process.env.HOST, process.env.PORT, process.env.DB);
-
 const contactMapper = require('../map/contact');
 
-module.exports = function(app) {
+module.exports = function(app, dbUrl) {
   
   /*
     Gets a list of Contacts by full name search
@@ -46,7 +38,7 @@ module.exports = function(app) {
       return res.json({ "Offline": true });
     }
     var sv = req.query.term;
-    mongodb.MongoClient.connect(url, function(err, client) {
+    mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -71,7 +63,7 @@ module.exports = function(app) {
       return res.json({ "Offline": true });
     }
     var sv = req.query.term;
-     mongodb.MongoClient.connect(url, function(err, client) {
+     mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -97,18 +89,21 @@ module.exports = function(app) {
       return res.json({ "Offline": true });
     }
     var contact = req.body;
-    mongodb.MongoClient.connect(url, function(err, client) {
+    mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
-      console.log(new Date());
 
       const db = client.db(process.env.DB);
 
       const contacts = db.collection('contacts');
+      
+      contact.modifiedDate = new Date();
 
       if(contact.id == null || contact.id.trim().length < 1)
       {
-        contact.
+        contact.creatingUser = contact.modifyingUser;
+        contact.createdDate = contact.modifiedDate;
+        
         contacts.insertOne(contactMapper.mapContactJsonToContact(contact), function(err, result) {
           client.close();
           if(err)
@@ -118,7 +113,7 @@ module.exports = function(app) {
           }
           else
           {
-             console.log('inserted record', result.insertedId);
+             console.log('Inserted Contact', result.insertedId, 'at', contact.modifiedDate);
              res.json({ "Success": false, "id": result.insertedId });
           }
         });
@@ -134,6 +129,7 @@ module.exports = function(app) {
           }
           else
           {
+             console.log('Updated Contact', contact.id, 'at', contact.modifiedDate);
              res.json({ "Success": true, "id": contact.id });
           }
         });
@@ -151,7 +147,7 @@ module.exports = function(app) {
       return res.json({ "Offline": true });
     }
     var id = req.query.id;
-    mongodb.MongoClient.connect(url, function(err, client) {
+    mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
 

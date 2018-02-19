@@ -74,10 +74,11 @@ const appUser = process.env.APP_USER;
 const appPassword = process.env.APP_PASSWORD;
 
 // DB URL
-const url = f('mongodb://%s:%s@%s:%s/?authSource=%s',
+const dbUrl = f('mongodb://%s:%s@%s:%s/?authSource=%s',
   user, password, process.env.HOST, process.env.PORT, process.env.DB);
 
-require('./routes')(app);
+// Route files
+require('./routes')(app, dbUrl);
 
 /*
   Generates a new password hash for testing
@@ -88,7 +89,7 @@ app.get("/updateUserPassword", function (req, res) {
     return res.json({ "Offline": true });
   }
   bcrypt.hash(appPassword, saltRounds, function(err, hash) {
-    mongodb.MongoClient.connect(url, function(err, client) {
+    mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -145,9 +146,9 @@ app.post("/api/v1/login", function (req, res) {
   }
   const user = req.body.userId.toLowerCase();
   const password = req.body.password;
-  console.log('LOGIN ' + user);
+  console.log('Start Login for', user);
   
-  mongodb.MongoClient.connect(url, function(err, client) {
+  mongodb.MongoClient.connect(dbUrl, function(err, client) {
     assert.equal(null, err);
     console.log("Connected to server");
 
@@ -160,6 +161,7 @@ app.post("/api/v1/login", function (req, res) {
       if(err || !userDoc)
       {
          client.close();
+         console.log('Invalid Username for', user);
          res.json({ "Success": false, "error": "Username or password is incorrect" });
       }
       else
@@ -172,7 +174,7 @@ app.post("/api/v1/login", function (req, res) {
               if(err)
               {
                   client.close();
-                  console.log(err);
+                  console.log('JWT Sign Error', err);
                   res.json({ "Success": false, "error": "JWT FAIL!"  });
               }
               else
@@ -187,6 +189,7 @@ app.post("/api/v1/login", function (req, res) {
                   else
                   {
                      client.close();
+                     console.log('Successful Login for', user);
                      res.json(
                        {
                          "Success": true, 
@@ -206,6 +209,7 @@ app.post("/api/v1/login", function (req, res) {
           else
           {
             client.close();
+            console.log('Invalid Password for', user);
             res.json({ "Success": false, "error": "Username or password is incorrect"  });
           }
         });
