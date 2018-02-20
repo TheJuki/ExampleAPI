@@ -37,7 +37,6 @@ module.exports = function(app, dbUrl) {
     {
       return res.json({ "Offline": true });
     }
-    var sv = req.query.term;
     mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");

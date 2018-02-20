@@ -37,7 +37,7 @@ module.exports = function(app, dbUrl) {
     {
       return res.json({ "Offline": true });
     }
-    var sv = req.query.term;
+    const term = req.query.term;
     mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
@@ -46,7 +46,7 @@ module.exports = function(app, dbUrl) {
 
       const contacts = db.collection('contacts');
 
-      contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => contactMapper.mapContactToTableCellJson(x)).toArray(function(err, docs) {
+      contacts.find({"fullName": {'$regex': term, '$options': 'i'}}).map(x => contactMapper.mapContactToTableCellJson(x)).toArray(function(err, docs) {
         assert.equal(err, null);
         res.json(docs);
         client.close();
@@ -62,7 +62,7 @@ module.exports = function(app, dbUrl) {
     {
       return res.json({ "Offline": true });
     }
-    var sv = req.query.term;
+    const term = req.query.term;
      mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
@@ -71,7 +71,7 @@ module.exports = function(app, dbUrl) {
 
       const contacts = db.collection('contacts');
 
-      contacts.find({"fullName": {'$regex': sv, '$options': 'i'}}).map(x => contactMapper.mapContactToContactLookupJson(x)).toArray(function(err, docs) {
+      contacts.find({"fullName": {'$regex': term, '$options': 'i'}}).map(x => contactMapper.mapContactToContactLookupJson(x)).toArray(function(err, docs) {
         assert.equal(err, null);
         res.json(docs);
         client.close();
@@ -88,7 +88,7 @@ module.exports = function(app, dbUrl) {
     {
       return res.json({ "Offline": true });
     }
-    var contact = req.body;
+    const contact = req.body;
     mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
@@ -146,12 +146,12 @@ module.exports = function(app, dbUrl) {
     {
       return res.json({ "Offline": true });
     }
-    var id = req.query.id;
+    const id = req.query.id;
     mongodb.MongoClient.connect(dbUrl, function(err, client) {
       assert.equal(null, err);
       console.log("Connected to server");
 
-      var db = client.db(process.env.DB);
+      const db = client.db(process.env.DB);
 
       const contacts = db.collection('contacts');
 
