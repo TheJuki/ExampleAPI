@@ -12,6 +12,7 @@
 
 ## Remixing
 * Go to [example-api-thejuki](https://glitch.com/edit/#!/example-api-thejuki) and edit a file to create a remix
+* Update your .env file with your MongoDB components and custom JWT information
 
 ## Live Example
 * [https://example-api-thejuki.glitch.me](https://example-api-thejuki.glitch.me)
