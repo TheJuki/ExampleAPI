@@ -25,12 +25,10 @@ const jwtSecret = process.env.JWT_SECRET;
 const jwtAudience = process.env.JWT_AUDIENCE;
 const jwtIssurer = process.env.JWT_ISSURER;
 
-const teamMapper = require('../map/team');
-
 module.exports = function(app, dbUrl) {
   
   /*
-    Gets the count
+    Gets the count entries for charts
   */
   app.get("/api/v1/count/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
     if(isOffline === "true")
