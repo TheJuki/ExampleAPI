@@ -97,6 +97,11 @@ module.exports = function(app, dbUrl) {
 
       const contacts = db.collection('contacts');
       
+      if(contact.supervisorId != null && contact.supervisorId === contact.id)
+      {
+          return res.json({ "Success": false, "error": "The Contact and Supervisor cannot be the same person." });
+      }
+      
       contact.modifiedDate = new Date();
 
       if(contact.id == null || contact.id.trim().length < 1)
