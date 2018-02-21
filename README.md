@@ -4,7 +4,7 @@
 
 ## Features
 - JWT Authorization headers
-- bcrypt Password hashing
+- bcrypt password hashing
 - Express routing
 - Pug views with Semantic UI
 - JSON bodies and responses (with mapping when necessary)
