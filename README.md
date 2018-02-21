@@ -7,7 +7,7 @@
 - bcrypt Password hashing
 - Express routing
 - Pug views with Semantic UI
-- JSON bodies and responses
+- JSON bodies and responses (with mapping when necessary)
 - MongoDB (find, insert, update)
 
 ## Remixing
@@ -20,6 +20,7 @@
 ## How to use
 * Use the website to get an idea of the JSON responses of the API.
 * Use the API in an application of your choice.
+* Except for Login and Verify, a JWT token is required in the header of the request. 'Authorization' = JWT Token with Bearer from Login.
 
 ### Login Post (/api/v1/login)
 * Use the credentials shown on the home page to login.
@@ -106,6 +107,51 @@
 * NOTE: This could be modified to return the inserted/updated ContactJson instead of just the id
 * Success - false if Contact could not be added or updated
 * id - insertedId or contact.id
+  
+### List Notes by Parent (/api/v1/note/list/json)
+
+#### Request (?term=) 
+* pId - parentId
+* pType - parentType
+* type - type (Type could be "All" to not filter by type)
+
+#### Response (JSON)
+* List of TableCellJson objects
+* NOTE: The fields of this JSON object are general and represents the position of the fields on a cell in a table or list
+  * id - _id
+  * status - type
+  * date - createdDate
+  * account - striptags(body) // Stripping HTML tags
+  * category - parentType
+  * contact - modifyingUser
+  
+### Get Note by Id (/api/v1/note/find/json)
+
+#### Request (?id=) 
+* id - The Note's _id
+
+#### Response (JSON)
+* NoteJson (Direct mapping to Note table except for _id)
+  * Success - false if no Note is found
+  * id - _id
+  * type - type
+  * body - body
+  * parentId - parentId
+  * parentType - parentType
+  * modifyingUser - modifyingUser
+  * creatingUser - creatingUser
+  * createdDate - createdDate
+  * modifiedDate - modifiedDate
+  
+### Save Note Post (/api/v1/note/save)
+
+#### Request (JSON body) 
+* body - NoteJson
+
+#### Response (JSON)
+* NOTE: This could be modified to return the inserted/updated NoteJson instead of just the id
+* Success - false if Note could not be added or updated
+* id - insertedId or note.id
   
 ## Contributing
 You can submit pull requests or issues to this project to make this API even better!
