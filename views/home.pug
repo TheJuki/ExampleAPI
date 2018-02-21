@@ -1,0 +1,40 @@
+extends layout.pug
+
+block content
+    h1.ui.center.aligned.header(style="margin-top: 3em") Welcome to the Example API
+    div.ui.text.container(style="padding-bottom: 20px")
+        div.ui.segments
+            div.ui.segment
+                div.ui.left.labeled.button
+                    div.ui.basic.label
+                        i.fas.fa-globe(style="margin-right: 10px") 
+                        span URL
+                        div.detail#serverDetail= server
+                    button.ui.icon.button.copy-button(data-clipboard-text= server)
+                        i.copy.icon
+            div.ui.segment
+                div.ui.left.labeled.button
+                    div.ui.basic.label
+                        i.fas.fa-user(style="margin-right: 10px") 
+                        span Username
+                        div.detail#userDetail= user
+                    button.ui.icon.button.copy-button(data-clipboard-text= user)
+                        i.copy.icon
+            div.ui.segment
+                div.ui.left.labeled.button
+                    div.ui.basic.label
+                        i.fas.fa-unlock-alt(style="margin-right: 10px") 
+                        span Password
+                        div.detail#passwordDetail= password
+                    button.ui.icon.button.copy-button(data-clipboard-text= password)
+                        i.copy.icon
+        div.ui.blue.segment
+            a(href="/login") Try logging in
+        div.ui.green.segment
+            a(href="/verify") Try verifying JWT token
+        div.ui.red.segment
+            a(href="/contact/lookup") Try looking up a contact
+    script(src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js" integrity="sha256-M9jjNz+jr/lTI+xVx2lpn3g6810YEPpSk8lReqH+qWE=" crossorigin="anonymous")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js")
+    script(src="/home.js")
