@@ -11,8 +11,7 @@ const websiteTitle = 'Example API';
 const express = require('express');
 
 // MongoDB
-const mongodb = require('mongodb');
-const ObjectId = require('mongodb').ObjectId;
+const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 
 // Content Filter
 var filter = require('content-filter');
@@ -74,8 +73,8 @@ const appUser = process.env.APP_USER;
 const appPassword = process.env.APP_PASSWORD;
 
 // DB URL
-const dbUrl = f('mongodb://%s:%s@%s:%s/?authSource=%s',
-  user, password, process.env.HOST, process.env.PORT, process.env.DB);
+const dbUrl = f('mongodb+srv://%s:%s@%s/%s?retryWrites=true&w=majority',
+  user, password, process.env.HOST, process.env.DB);
 
 // Route files
 require('./routes')(app, dbUrl);
@@ -89,7 +88,8 @@ app.get("/updateUserPassword", function (req, res) {
     return res.json({ "Offline": true });
   }
   bcrypt.hash(appPassword, saltRounds, function(err, hash) {
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -148,7 +148,8 @@ app.post("/api/v1/login", function (req, res) {
   const password = req.body.password;
   console.log('Start Login for', user);
   
-  mongodb.MongoClient.connect(dbUrl, function(err, client) {
+  const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
     assert.equal(null, err);
     console.log("Connected to server");
 

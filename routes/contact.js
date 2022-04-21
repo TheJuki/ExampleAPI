@@ -5,8 +5,7 @@
 */
 
 // MongoDB
-const mongodb = require('mongodb');
-const ObjectId = require('mongodb').ObjectId;
+const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 
 // String Formatter
 const f = require('util').format;
@@ -15,7 +14,7 @@ const f = require('util').format;
 const assert = require('assert');
 
 // JWT
-const jwt = require('express-jwt');
+const { expressjwt: jwt } = require("express-jwt");
 
 // Is Offline?
 const isOffline = process.env.ISOFFLINE;
@@ -32,13 +31,14 @@ module.exports = function(app, dbUrl) {
   /*
     Gets a list of Contacts by full name search
   */
-  app.get("/api/v1/contact/list/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.get("/api/v1/contact/list/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer, algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     const term = req.query.term;
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -57,13 +57,14 @@ module.exports = function(app, dbUrl) {
   /*
     Gets a list of Lookup Contacts by full name search
   */
-  app.get("/api/v1/contact/lookup/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.get("/api/v1/contact/lookup/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer, algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     const term = req.query.term;
-     mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+     client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -83,19 +84,25 @@ module.exports = function(app, dbUrl) {
   /*
     Saves a Contact
   */
-  app.post("/api/v1/contact/save", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.post("/api/v1/contact/save", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer, algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     const contact = req.body;
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
       const db = client.db(process.env.DB);
 
       const contacts = db.collection('contacts');
+      
+      if(contact.supervisorId != null && contact.supervisorId === contact.id)
+      {
+          return res.json({ "Success": false, "error": "The Contact and Supervisor cannot be the same person." });
+      }
       
       contact.modifiedDate = new Date();
 
@@ -141,13 +148,14 @@ module.exports = function(app, dbUrl) {
   /*
     Gets a Contact by _id
   */
-  app.get("/api/v1/contact/find/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.get("/api/v1/contact/find/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer, algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     const id = req.query.id;
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
