@@ -5,8 +5,7 @@
 */
 
 // MongoDB
-const mongodb = require('mongodb');
-const ObjectId = require('mongodb').ObjectId;
+const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 
 // String Formatter
 const f = require('util').format;
@@ -15,7 +14,7 @@ const f = require('util').format;
 const assert = require('assert');
 
 // JWT
-const jwt = require('express-jwt');
+const { expressjwt: jwt } = require("express-jwt");
 
 // Is Offline?
 const isOffline = process.env.ISOFFLINE;
@@ -32,7 +31,7 @@ module.exports = function(app, dbUrl) {
   /*
     Gets a list of Notes by parent id and type
   */
-  app.get("/api/v1/note/list/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.get("/api/v1/note/list/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer, algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
@@ -40,7 +39,8 @@ module.exports = function(app, dbUrl) {
     const pId = req.query.pId;
     const pType = req.query.pType;
     const type = req.query.type;
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -66,13 +66,13 @@ module.exports = function(app, dbUrl) {
   /*
     Saves a Note
   */
-  app.post("/api/v1/note/save", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.post("/api/v1/note/save", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer,  algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     const note = req.body;
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
@@ -124,13 +124,14 @@ module.exports = function(app, dbUrl) {
   /*
     Gets a Note by _id
   */
-  app.get("/api/v1/note/find/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer}), function (req, res) {
+  app.get("/api/v1/note/find/json", jwt({secret: jwtSecret, audience: jwtAudience, issuer: jwtIssurer,  algorithms: ["HS256"]}), function (req, res) {
     if(isOffline === "true")
     {
       return res.json({ "Offline": true });
     }
     const id = req.query.id;
-    mongodb.MongoClient.connect(dbUrl, function(err, client) {
+    const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    client.connect(err => {
       assert.equal(null, err);
       console.log("Connected to server");
 
